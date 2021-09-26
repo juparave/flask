@@ -14,8 +14,6 @@ from xhtml2pdf import pisa
 
 def convert_html_to_pdf_stream(source_html, replace_char=False):
 
-    pisa.showLogging()
-    # create pdf
     buf = BytesIO()
     pisa.showLogging()
 

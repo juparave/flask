@@ -65,9 +65,6 @@ def to_pdf():
     static_dir = parent_dir / 'static'
     static_dir.resolve()
     html = render_template("registry.html",  registry=registry, static_dir=static_dir)
-    print(html)
-    print(json.detect_encoding(html.encode('iso-8859-1')))
-
     pdf = convert_html_to_pdf_stream(html, replace_char=True)
     response = make_response(pdf)
     response.headers["Content-Type"] = "application/pdf"

@@ -20,6 +20,7 @@ Create an application on https://developer.paypal.com/developer/applications
 From there take CLIENT_ID and Secret values, store them in environment variables and them from `Config` object
 
 ```python
+# server/config/config.py
 class Config(object):
     basedir = os.path.abspath(os.path.dirname(__file__))
     ...
@@ -31,7 +32,7 @@ class Config(object):
 
 The only way to add products and plans is via rest API.  We can do it via flask commands.
 
-Define your product `paypal/product.yml`
+Define your product `lib/paypal/product.yml`
 
 ```yaml
 ---
@@ -41,7 +42,7 @@ description: "Stub Product for Tests"
 type: "SERVICE"
 ```
 
-Define your plan `paypal/plan.yml`
+Define your plan `lib/paypal/plan.yml`
 
 ```yaml
 ---
@@ -129,8 +130,8 @@ Then you can create your product and plan
 
     $ flask create_product
     INFO {'id': 'myproduct-id-demo', 'name': 'MyProduct Subscription', 'description': 'Stub Product for Tests', 'type': 'SERVICE'}
-    INFO {'id': 'myproduct-id-demo'', 'name': 'MyProduct Subscription', 'description': 'Stub Product for Tests', 'create_time': '2021-09-28T21:24:52Z', 'links': [{'href': 'https://api.sandbox.paypal.com/v1/catalogs/products/midimagic-demo', 'rel': 'self', 'method': 'GET'}, {'href': 'https://api.sandbox.paypal.com/v1/catalogs/products/myproduct-id-demo', 'rel': 'edit', 'method': 'PATCH'}]}
-    # flask create_plan
+    INFO {'id': 'myproduct-id-demo'', 'name': 'MyProduct Subscription', 'description': 'Stub Product for Tests', 'create_time': '2021-09-28T21:24:52Z', 'links': [{'href': 'https://api.sandbox.paypal.com/v1/catalogs/products/myproduct-id-demo', 'rel': 'self', 'method': 'GET'}, {'href': 'https://api.sandbox.paypal.com/v1/catalogs/products/myproduct-id-demo', 'rel': 'edit', 'method': 'PATCH'}]}
+    $ flask create_plan
     INFO [server.app.create_plan:53] {'product_id': 'myproduct-id-demo', 'name': 'Mensual', 'description': 'Suscripción mensual', 'billing_cycles': [{'frequency': {'interval_unit': 'MONTH', 'interval_count': 1}, 'tenure_type': 'REGULAR', 'sequence': 1, 'total_cycles': 0, 'pricing_scheme': {'fixed_price': {'value': '19.99', 'currency_code': 'USD'}}}], 'payment_preferences': {'auto_bill_outstanding': True, 'setup_fee': {'value': 0, 'currency_code': 'USD'}, 'setup_fee_failure_action': 'CONTINUE', 'payment_failure_threshold': 3}}
     INFO [server.app.create_plan:55] {'id': 'P-98T556722R998663LMFJYXNY', 'product_id': 'myproduct-id-demo', 'name': 'Mensual', 'status': 'ACTIVE', 'description': 'Suscripción mensual', 'usage_type': 'LICENSED', 'create_time': '2021-09-28T21:40:07Z', 'links': [{'href': 'https://api.sandbox.paypal.com/v1/billing/plans/P-98T556722R998663LMFJYXNY', 'rel': 'self', 'method': 'GET', 'encType': 'application/json'}, {'href': 'https://api.sandbox.paypal.com/v1/billing/plans/P-98T556722R998663LMFJYXNY', 'rel': 'edit', 'method': 'PATCH', 'encType': 'application/json'}, {'href': 'https://api.sandbox.paypal.com/v1/billing/plans/P-98T556722R998663LMFJYXNY/deactivate', 'rel': 'self', 'method': 'POST', 'encType': 'application/json'}]}
 

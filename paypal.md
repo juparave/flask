@@ -147,7 +147,7 @@ class Config(object):
 
 ### Prepare PayPal flow
 
-Create a subscription id and link it to the user
+#### Create a subscription id and link it to the user
 
 ```python
 # lib/paypal/paypal_payments.py
@@ -205,3 +205,89 @@ When user requests to subscribe, we create a PayPal subscription id and store it
 user's object.  The subscription is created but is not active yet.  Then we redirect the user to PayPal for user approval with the url rel `approve`
 
 
+#### Webhooks
+
+```python
+# views/paypal_view.py
+class PaypalWebhookView(Resource):
+
+    def post(self):
+        from server.app import app
+        from server.lib.paypal import paypal_payments as paypal
+
+        logger.info(jsonify(request.args))
+        print(request.json)
+        print("Webhook POST")
+
+        transmission_id = request.headers.get('Paypal-Transmission-Id')
+        timestamp = request.headers.get('Paypal-Transmission-Time')
+        webhook_id = app.config["PAYPAL_WEBHOOK_ID"]
+        event_body = request.data.decode('utf-8')
+        cert_url = request.headers.get('Paypal-Cert-Url')
+        auth_algo = request.headers.get('Paypal-Auth-Algo')
+        actual_signature = request.headers.get('Paypal-Transmission-Sig')
+        
+        # Validate Webhook data
+        response = WebhookEvent.verify(
+            transmission_id,
+            timestamp,
+            webhook_id,
+            event_body,
+            cert_url,
+            actual_signature,
+            auth_algo
+        )
+        if response:
+            obj = request.json
+
+            event_type = obj.get('event_type')
+            resource = obj.get('resource')
+
+            if event_type == 'PAYMENT.SALE.COMPLETED':
+                # update user's pair until value
+                paypal.set_paid_until(resource, paypal.SUBSCRIPTION)
+
+            if event_type == 'CHECKOUT.ORDER.APPROVED':
+                paypal.set_paid_until(resource, paypal.ORDER)
+
+        return make_response({'success': True}, 200, {'ContentType': 'application/json'})
+
+```
+
+```python
+# lib/python/paypal_paymewnts.py
+
+def plus_days(count):
+    _date = datetime.now()
+    return _date + timedelta(days=count)
+
+
+def set_paid_until(obj, from_what):
+
+    if from_what == SUBSCRIPTION:
+        billing_agreement_id = obj['billing_agreement_id']
+        ret = myapi.get(f"v1/billing/subscriptions/{billing_agreement_id}")
+
+        user = User.by_paypal_subscription_id(ret['id'])
+        if not user:
+            app.logger.error(f"User with order id={ret['id']} not found.")
+            return False
+
+        app.logger.debug(f"SUBSCRIPTION {obj} for user {user.email}")
+        if obj['amount']['total'] == '19.99':
+            user.set_paid_until(plus_days(count=31))
+            db.session.commit()
+
+    if from_what == ORDER:
+        url = get_url_from(obj['links'], 'self')
+        ret = myapi.get(url)
+
+        user = User.by_paypal_subscription_id(ret['id'])
+        if not user:
+            app.logger.error(f"User with order id={ret['id']} not found.")
+            return False
+
+        app.logger.debug(f"ORDER {obj} for user {user.email}")
+
+    return True
+```

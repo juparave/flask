@@ -4,7 +4,9 @@ Install iPython for Flask Shell
 
     $ pip install flask-shell-ipython
   
-Example sessioin to set users passwords
+Example session to set users passwords
+
+    $ flask shell
 
 ```python
 from server.model.user import User, Role
